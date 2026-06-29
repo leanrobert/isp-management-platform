@@ -41,6 +41,16 @@ services:
     command: >
       sh -c "npm run migrate && npm start"
 
+  frontend:
+    build: ./frontend
+    container_name: isp-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - isp-network
+
 volumes:
   mysql_data:
 
