@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: isp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: isp_management
+      MYSQL_USER: isp_user
+      MYSQL_PASSWORD: isp_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - isp-network
+
+  backend:
+    build: ./backend
+    container_name: isp-backend
+    environment:
+      DB_HOST: mysql
+      DB_USER: isp_user
+      DB_PASSWORD: isp_password
+      DB_NAME: isp_management
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - isp-network
+    command: >
+      sh -c "npm run migrate && npm start"
+
+volumes:
+  mysql_data:
+
+networks:
+  isp-network:
+    driver: bridge
