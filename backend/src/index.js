@@ -4,6 +4,12 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
 
+const clientRoutes = require("./routes/clients");
+const planRoutes = require("./routes/plans");
+const pppoeRoutes = require("./routes/pppoe");
+const accountingRoutes = require("./routes/accounting");
+const dashboardRoutes = require("./routes/dashboard");
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -16,6 +22,13 @@ app.use(morgan("combined"));
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// Routes
+app.use("/api/clients", clientRoutes);
+app.use("/api/plans", planRoutes);
+app.use("/api/pppoe", pppoeRoutes);
+app.use("/api/accounting", accountingRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
