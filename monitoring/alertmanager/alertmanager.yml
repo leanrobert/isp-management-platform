@@ -1,0 +1,23 @@
+global:
+  smtp_smarthost: "localhost:587"
+  smtp_from: "alerts@isp.local"
+
+route:
+  receiver: "telegram"
+  group_by: ["alertname", "severity"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+
+receivers:
+  - name: "telegram"
+    telegram_configs:
+      - api_url: "https://api.telegram.org"
+        bot_token: "8867743342:AAG_E0Gs2C3iVNRAiBTTjWjQi-vu6mGgcLM"
+        chat_id: -5212651403
+        message: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          {{ end }}

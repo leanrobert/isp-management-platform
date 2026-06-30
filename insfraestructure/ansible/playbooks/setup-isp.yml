@@ -1,0 +1,126 @@
+- name: Setup ISP Management Server
+  hosts: all
+  become: true
+  vars:
+    node_version: "18"
+    docker_users:
+      - "{{ ansible_user }}"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+          - nginx
+          - mysql-server
+          - python3-pip
+          - git
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+
+    - name: Add user to docker group
+      user:
+        name: "{{ item }}"
+        groups: docker
+        append: yes
+      loop: "{{ docker_users }}"
+
+    - name: Install Node.js
+      shell: |
+        curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | bash -
+        apt-get install -y nodejs
+      args:
+        creates: /usr/bin/node
+
+    - name: Configure Nginx as reverse proxy
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/isp-management
+      notify: restart nginx
+
+    - name: Enable Nginx site
+      file:
+        src: /etc/nginx/sites-available/isp-management
+        dest: /etc/nginx/sites-enabled/isp-management
+        state: link
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+    - name: Configure MySQL for production
+      template:
+        src: mysql.cnf.j2
+        dest: /etc/mysql/mysql.conf.d/isp.cnf
+      notify: restart mysql
+
+    - name: Create application database user
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        state: present
+
+    - name: Create application database
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+
+    - name: Configure UFW firewall
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "80"
+        - "443"
+        - "3001"
+        - "9090"
+        - "3002"
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+    - name: restart mysql
+      service:
+        name: mysql
+        state: restarted
