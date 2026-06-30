@@ -13,8 +13,8 @@ receivers:
   - name: "telegram"
     telegram_configs:
       - api_url: "https://api.telegram.org"
-        bot_token: "8867743342:AAG_E0Gs2C3iVNRAiBTTjWjQi-vu6mGgcLM"
-        chat_id: -5212651403
+        bot_token: "TOKEN_ID"
+        chat_id: -1
         message: |
           {{ range .Alerts }}
           Alert: {{ .Annotations.summary }}
