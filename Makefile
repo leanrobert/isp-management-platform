@@ -1,4 +1,4 @@
-.PHONY: build up down logs migrate test clean
+.PHONY: build up down logs migrate seed test clean
 
 build:
 	docker-compose build
@@ -14,6 +14,9 @@ logs:
 
 migrate:
 	docker-compose exec backend npm run migrate
+
+seed:
+	docker-compose exec backend npm run seed
 
 test:
 	docker-compose exec backend npm test
