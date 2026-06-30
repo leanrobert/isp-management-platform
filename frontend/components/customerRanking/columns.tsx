@@ -13,8 +13,9 @@ export type Customer = {
 
 export const columns: ColumnDef<Customer>[] = [
   {
-    accessorKey: "rank",
+    id: "rank",
     header: "Rank",
+    cell: ({ row }) => row.index + 1,
   },
   {
     accessorKey: "full_name",
@@ -35,5 +36,10 @@ export const columns: ColumnDef<Customer>[] = [
   {
     accessorKey: "percentage",
     header: "Percentage",
+    cell: ({ row }) => {
+      const percentage = parseFloat(row.getValue("percentage"));
+      const color = percentage >= 80 ? "text-red-500" : "text-green-500";
+      return <span className={color}>{percentage.toFixed(2)}%</span>;
+    },
   },
 ];
